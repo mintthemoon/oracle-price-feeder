@@ -26,6 +26,7 @@ _list:
   @just --list --no-aliases
 
 build:
+  mkdir -p {{build_path}}
   go build -mod=readonly -o {{build_path}} -ldflags "{{ldflags}}" ./...
 
 install:
@@ -33,6 +34,7 @@ install:
 
 clean:
   rm -rf {{build_path}}
+  go clean
 
 clobber: clean build
 
