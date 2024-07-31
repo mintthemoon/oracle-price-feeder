@@ -14,11 +14,11 @@ jobs:
         owner: Team-Kujira
         base: main
         head: master
-        merge_method: rebase
+        merge_method: merge
     - name: Sync next
       uses: tgymnich/fork-sync@v2.0.10
       with:
         owner: Team-Kujira
         base: next
         head: next
-        merge_method: rebase
+        merge_method: merge
