@@ -49,8 +49,10 @@ docker-build:
 
 [group("docker")]
 docker-ci REPO: docker-build
-  docker tag {{docker_tag}} {{REPO}}:{{VERSION}} {{REPO}}:{{GIT_BRANCH}}
-  docker push {{REPO}}:{{VERSION}} {{REPO}}:{{GIT_BRANCH}}
+  docker tag {{docker_tag}} {{REPO}}:{{VERSION}}
+  docker tag {{docker_tag}} {{REPO}}:{{GIT_BRANCH}}
+  docker push {{REPO}}:{{VERSION}}
+  docker push {{REPO}}:{{GIT_BRANCH}}
 
 [group("tests")]
 unit-test:
