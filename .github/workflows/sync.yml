@@ -1,0 +1,24 @@
+---
+name: Sync with upstream
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Sync main
+      uses: tgymnich/fork-sync@v2.0.10
+      with:
+        owner: Team-Kujira
+        base: main
+        head: master
+        merge_method: rebase
+    - name: Sync next
+      uses: tgymnich/fork-sync@v2.0.10
+      with:
+        owner: Team-Kujira
+        base: next
+        head: next
+        merge_method: rebase
