@@ -1,28 +1,43 @@
-FROM golang:alpine AS oracle
-RUN apk add --no-cache git make gcc libc-dev
-WORKDIR /go/src/github.com/team-kujira
-RUN git clone https://github.com/Team-Kujira/oracle-price-feeder.git
-WORKDIR /go/src/github.com/team-kujira/oracle-price-feeder
-RUN wget -O /lib/libwasmvm_muslc.a https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a
-ARG VERSION=master
-RUN git checkout ${VERSION}
-RUN COMMIT="$(git rev-parse HEAD)"; BUILD_TAGS=muslc CGO_ENABLED=1 go install -mod=readonly -tags "muslc" -ldflags "-X price-feeder/cmd.Version=${VERSION}-$COMMIT -X price-feeder/cmd.Commit=$COMMIT" ./...
+ARG src=remote
+ARG remote_branch=master
+ARG remote_url="https://github.com/Team-Kujira/oracle-price-feeder.git"
+ARG user=kuji
+ARG home=/kuji
+ARG uid=3232
+ARG gid=3232
+ARG binary="price-feeder"
+ARG just_install_url="https://github.com/casey/just/releases/download/1.33.0/just-1.33.0-x86_64-unknown-linux-musl.tar.gz"
 
-FROM golang:alpine AS core
-RUN apk add --no-cache git make gcc libc-dev
-WORKDIR /go/src/github.com/team-kujira
-RUN git clone https://github.com/Team-Kujira/core.git
-WORKDIR /go/src/github.com/team-kujira/core
-RUN wget -O /lib/libwasmvm_muslc.a https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a
-ARG VERSION=master
-RUN git checkout ${VERSION}
-RUN COMMIT="$(git rev-parse HEAD)"; BUILD_TAGS=muslc CGO_ENABLED=1 go install -mod=readonly -tags "muslc" -ldflags "-X price-feeder/cmd.Version=${VERSION}-$COMMIT -X price-feeder/cmd.Commit=$COMMIT" ./...
+FROM golang:1.21.8-bookworm AS build
+ARG just_install_url
+ARG binary
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /work
+RUN echo "install just from ${just_install_url}"
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y curl && \
+    curl -fsSL ${just_install_url} | tar -xzvC /usr/bin -- just
+COPY . .
+RUN just build
+WORKDIR /work/dist
+RUN mkdir bin lib && \
+    mv ../build/${binary} ./bin/ && \
+    mv $(ldd ./bin/${binary} | grep libwasmvm | awk '{print $3}') ./lib/
 
-FROM alpine:latest 
-COPY --from=oracle /go/bin/price-feeder /usr/local/bin
-COPY --from=core /go/bin/kujirad /usr/local/bin
-RUN apk add --no-cache bash
-RUN apk add --no-cache gcc
-COPY commands.sh /scripts/commands.sh
-RUN ["chmod", "+x", "/scripts/commands.sh"]
-ENTRYPOINT ["/scripts/commands.sh"]
+FROM debian:bookworm AS main
+ARG user
+ARG home
+ARG uid
+ARG gid
+ARG binary
+ENV DEBIAN_FRONTEND=noninteractive
+COPY --from=build /work/dist/* /usr/
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y ca-certificates && \
+    groupadd -g ${gid} -r ${user} && \
+    useradd -m -u ${uid} -g ${user} -s /bin/bash -d ${home} ${user}
+USER ${user}:${user}
+WORKDIR ${home}
+ENTRYPOINT ["${binary}"]
