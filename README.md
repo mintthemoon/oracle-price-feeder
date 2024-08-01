@@ -2,39 +2,32 @@
 
 This is a standalone version of [Umee's fantastic work](https://github.com/umee-network/umee/tree/main/price-feeder) migrating [Terra's oracle-feeder](https://github.com/terra-money/oracle-feeder) app to Go, and integrating it more closely with the Cosmos SDK.
 
-## Providers
 
-The list of current supported providers:
+## Build and install
 
-- [Astroport](https://astroport.fi/en)
-- [Binance](https://www.binance.com/en)
-- [BinanceUS](https://www.binance.us)
-- [Bitfinex](https://www.bitfinex.com)
-- [Bitget](https://www.bitget.com/en/)
-- [Bitmart](https://www.bitmart.com/en-US)
-- [Bitstamp](https://www.bitstamp.net)
-- [Bybit](https://www.bybit.com/en-US/)
-- [Camelot DEX](https://excalibur.exchange)
-- [Coinbase](https://www.coinbase.com/)
-- [Crypto.com](https://crypto.com/eea)
-- [Curve](https://curve.fi)
-- [FIN](https://fin.kujira.app)
-- [Gate.io](https://www.gate.io)
-- [HitBTC](https://hitbtc.com)
-- [Huobi](https://www.huobi.com/en-us/)
-- [Kraken](https://www.kraken.com/en-us/)
-- [Kucoin](https://www.kucoin.com)
-- [LBank](https://www.lbank.com)
-- [MEXC](https://www.mexc.com/)
-- [Okx](https://www.okx.com/)
-- [Osmosis](https://app.osmosis.zone/)
-- [PancakeSwap (Ethereum)](https://pancakeswap.finance)
-- [Phemex](https://phemex.com)
-- [Poloniex](https://poloniex.com)
-- [Pyth](https://pyth.network)
-- [UniswapV3](https://app.uniswap.org)
-- [WhiteWhale](https://whitewhale.money)
-- [XT.COM](https://www.xt.com/en)
+An extensive installation guide can be found [here](https://docs.kujira.app/validators/run-a-node/oracle-price-feeder).
+
+### Using `just`
+
+This project uses `just` (https://just.systems) for build management. A simpler and
+faster alternative to `make` written in Rust, `just` is the easiest way to build and
+install this project.
+
+Many install methods for `just` are documented on its [Github page](https://github.com/casey/just).
+The recommended one, which works on most platforms, is via the `asdf` package manager
+[available here](https://asdf-vm.com/guide/getting-started.html). Install it and then install `just`:
+```
+asdf plugin add just
+asdf install just
+```
+
+Run `just` without any arguments to list available recipes. Code for the recipes can be found in the
+`justfile`.
+
+### Docker
+
+Docker images with x86_64 and ARM64 support are provided for this repository, generated via GitHub
+Actions. See **Packages** in the sidebar for the available tags.
 
 ## Usage
 
@@ -48,10 +41,6 @@ Please see the [example configuration](config.example.toml) for more details.
 ```shell
 price-feeder /path/to/price_feeder_config.toml
 ```
-
-## Installation
-
-An extensive installation guide can be found [here](https://docs.kujira.app/validators/run-a-node/oracle-price-feeder).
 
 ## Configuration
 
@@ -187,14 +176,13 @@ provider3 = 0
 
 In this example the resulting price will be following provider1 as long as it is available (100k times more weight than provider2). If provider1 fails, the resulting price will follow provider2, and if that fails it too, the resulting price is the one reported by provider3. All assuming the deviation of the all prices are within the configured range.
 
+
 ## Keyring
 
 Our keyring must be set up to sign transactions before running the price feeder.
 Additional info on the different keyring modes is available [here](https://docs.cosmos.network/master/run-node/keyring.html).
-**Please note that the `test` and `memory` modes are only for testing purposes.**
-**Do not use these modes for running the price feeder against mainnet.**
 
-### Setup
+### Setting the keyring file password
 
 The keyring `dir` and `backend` are defined in the config file.
 You may use the `PRICE_FEEDER_PASS` environment variable to set up the keyring password.
@@ -203,3 +191,56 @@ Ex :
 `export PRICE_FEEDER_PASS=keyringPassword`
 
 If this environment variable is not set, the price feeder will prompt the user for input.
+
+### Providing a mnemonic
+
+Use the `PRICE_FEEDER_MNEMONIC` environment variable to automatically generate a keyring entry
+from a mnemonic. This respects the standard `keyring` config, so if you use the `file`
+backend a password is still needed. As an alternative here you can use `backend = "memory"`
+and no keyring data will be persisted to disk; in this case the `dir` config is irrelevant.
+
+Ideally the mnemonic variable should be provided from CI with secrets management, this way your
+key data is never persisted in plaintext and not available to external processes.
+
+### Backend recommendations
+
+- The `file` backend is the most well-tested and makes sense in most cases.
+- The `memory` backend should be used only if a mnemonic env variable is provided, otherwise
+your feeder will not recover from a restart without manual input.
+- The `test` backend stores key data on disk in plaintext, never use this unless testing with
+dummy accounts.
+
+
+## Providers
+
+The list of current supported providers:
+
+- [Astroport](https://astroport.fi/en)
+- [Binance](https://www.binance.com/en)
+- [BinanceUS](https://www.binance.us)
+- [Bitfinex](https://www.bitfinex.com)
+- [Bitget](https://www.bitget.com/en/)
+- [Bitmart](https://www.bitmart.com/en-US)
+- [Bitstamp](https://www.bitstamp.net)
+- [Bybit](https://www.bybit.com/en-US/)
+- [Camelot DEX](https://excalibur.exchange)
+- [Coinbase](https://www.coinbase.com/)
+- [Crypto.com](https://crypto.com/eea)
+- [Curve](https://curve.fi)
+- [FIN](https://fin.kujira.app)
+- [Gate.io](https://www.gate.io)
+- [HitBTC](https://hitbtc.com)
+- [Huobi](https://www.huobi.com/en-us/)
+- [Kraken](https://www.kraken.com/en-us/)
+- [Kucoin](https://www.kucoin.com)
+- [LBank](https://www.lbank.com)
+- [MEXC](https://www.mexc.com/)
+- [Okx](https://www.okx.com/)
+- [Osmosis](https://app.osmosis.zone/)
+- [PancakeSwap (Ethereum)](https://pancakeswap.finance)
+- [Phemex](https://phemex.com)
+- [Poloniex](https://poloniex.com)
+- [Pyth](https://pyth.network)
+- [UniswapV3](https://app.uniswap.org)
+- [WhiteWhale](https://whitewhale.money)
+- [XT.COM](https://www.xt.com/en)

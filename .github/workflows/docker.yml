@@ -35,5 +35,5 @@ jobs:
         if: github.event_name != 'pull_request'
         run: just docker-ci "${REGISTRY}/${REPO}"
       - name: Docker build (PR validate)
-        if: github.event.name == 'pull_request'
+        if: github.event_name == 'pull_request'
         run: just docker-build
